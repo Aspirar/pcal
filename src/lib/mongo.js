@@ -1,4 +1,5 @@
 const fs = require("fs");
+const _ = require("lodash");
 const path = require("path");
 
 function getCollection(dir, db, collectionName) {
@@ -7,7 +8,8 @@ function getCollection(dir, db, collectionName) {
     .readdirSync(path.join(dir, collectionName))
     .reduce((coll, fnName) => {
       const fn = require(path.join(dir, collectionName, fnName));
-      coll[fnName.split(".")[0]] = fn.bind(null, collDb);
+      const key = _.camelCase(fnName.split(".")[0]);
+      coll[key] = fn.bind(null, { db: collDb, model: coll });
       return coll;
     }, {});
 }
