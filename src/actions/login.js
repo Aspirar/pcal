@@ -8,21 +8,21 @@ async function insertOrFetchUser(req) {
   });
 }
 
-function generateToken() {
+function generateSid() {
   return crypto.randomBytes(24).toString("base64");
 }
 
-async function updateToken(model, userId, token) {
-  model.users.updateToken({
+async function updateSid(model, userId, sid) {
+  model.users.updateSid({
     id: userId,
-    tokenHash: await bcrypt.hash(token, 8),
+    sidHash: await bcrypt.hash(sid, 8),
   });
 }
 
 async function generateAndUpdateToken(model, userId) {
-  const token = generateToken();
-  await updateToken(model, userId, token);
-  return `${userId}-${token}`;
+  const sid = generateSid();
+  await updateSid(model, userId, sid);
+  return `${userId}-${sid}`;
 }
 
 module.exports = async (req, res) => {
