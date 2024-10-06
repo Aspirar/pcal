@@ -2,6 +2,7 @@ const express = require("express");
 
 const createMeeting = require("./actions/create-meeting");
 const createScheduler = require("./actions/create-scheduler");
+const deleteMeeting = require("./actions/delete-meeting");
 const getSchedulers = require("./actions/get-schedulers");
 const getSlots = require("./actions/get-slots");
 const health = require("./actions/health");
@@ -18,6 +19,7 @@ router.get("/schedulers/:schedulerId/slots", getSlots);
 const authenticatedRouter = new express.Router();
 authenticatedRouter.post("/scheduler/create", createScheduler);
 authenticatedRouter.get("/schedulers", getSchedulers);
+authenticatedRouter.post("/meeting/:meetingId/delete", deleteMeeting);
 
 const viewsRouter = new express.Router();
 viewsRouter.get("/login", loginView);
