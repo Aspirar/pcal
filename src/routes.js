@@ -12,15 +12,12 @@ const createSchedulerView = require("./views/create-scheduler");
 const router = new express.Router();
 router.get("/health", health);
 router.post("/login", login);
+router.post("/schedulers/:schedulerId/meeting/create", createMeeting);
 
 const authenticatedRouter = new express.Router();
 authenticatedRouter.post("/scheduler/create", createScheduler);
 authenticatedRouter.get("/schedulers", getSchedulers);
 authenticatedRouter.get("/schedulers/:schedulerId/slots", getSlots);
-authenticatedRouter.post(
-  "/schedulers/:schedulerId/meeting/create",
-  createMeeting,
-);
 
 const viewsRouter = new express.Router();
 viewsRouter.get("/login", loginView);
