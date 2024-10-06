@@ -1,8 +1,6 @@
 const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 
-const { AuthenticationError } = require("../errors");
-
 function splitToken(token) {
   const [userId, sid] = token.split("-");
   return {
@@ -17,6 +15,7 @@ module.exports = async (req, res, next) => {
 
   const { userId, sid } = splitToken(token);
   const user = await req.model.users.fetchSid(userId);
+  if (!user) return next();
   if (await bcrypt.compare(sid, user.sidHash)) req.userId = userId;
 
   next();
