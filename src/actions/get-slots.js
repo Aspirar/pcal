@@ -107,12 +107,41 @@ function filterSlotsForNotice(slots, scheduler) {
   return slots.filter((slot) => slot.start - Date.now() >= scheduler.notice);
 }
 
+function fetchMeetingsForCurUser(slots, req) {
+  if (!slots.length) return [];
+  return req.model.meetings.fetchByTimeRange({
+    userId: req.userId,
+    startTime: toDate(slots[0].start),
+    endTime: toDate(slots[slots.length - 1].end),
+  });
+}
+
+function setOverlapInSlots(slots, meetings) {
+  let i = 0;
+  let j = 0;
+  while (i < slots.length && j < meetings.length) {
+    if (isAfterOrEqual(slots[i].start, meetings[j].endTime)) j += 1;
+    else if (isBeforeOrEqual(slots[i].end, meetings[j].startTime)) i += 1;
+    else {
+      slots[i].overlap = true;
+      i += 1;
+    }
+  }
+}
+
+async function addOverlapToSlots(slots, req) {
+  const meetings = await fetchMeetingsForCurUser(slots, req);
+  setOverlapInSlots(slots, meetings);
+}
+
 async function fetchMeetingsAndFilterSlots(scheduler, slots, req) {
   const meetings = await fetchMeetings(scheduler, slots, req);
-  return _.flow([
+  const filtered = _.flow([
     (slots) => filterConflictingSlots(slots, meetings, scheduler),
     (slots) => filterSlotsForNotice(slots, scheduler),
   ])(slots);
+  await addOverlapToSlots(filtered, req);
+  return filtered;
 }
 
 async function getFinalSlots(scheduler, startTime, endTime, req) {
