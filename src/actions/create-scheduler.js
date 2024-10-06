@@ -1,11 +1,8 @@
-const { TZDate } = require("@date-fns/tz");
-
 module.exports = async (req, res) => {
-  const tz = req.body.tz;
   await req.model.schedulers.insert({
     name: req.body.name,
-    startTime: new TZDate(req.body.startTime, tz).internal,
-    endTime: new TZDate(req.body.endTime, tz).internal,
+    startTime: req.body.startTime,
+    endTime: req.body.endTime,
     userId: req.userId,
     startBuffer: req.body.startBuffer,
     endBuffer: req.body.endBuffer,

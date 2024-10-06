@@ -2,9 +2,9 @@ const axios = require("./axios");
 
 async function run() {
   const response = await axios.get(
-    "/schedulers/670165d04492194ad600a304/slots",
+    "/schedulers/67028caaba549163f1cfc4fe/slots",
     {
-      params: { startTime: new Date() },
+      params: { startDate: "2024-10-06", tz: "Asia/Kolkata" },
     },
   );
   console.log(response.data);

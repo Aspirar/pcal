@@ -13,11 +13,11 @@ const router = new express.Router();
 router.get("/health", health);
 router.post("/login", login);
 router.post("/schedulers/:schedulerId/meeting/create", createMeeting);
+router.get("/schedulers/:schedulerId/slots", getSlots);
 
 const authenticatedRouter = new express.Router();
 authenticatedRouter.post("/scheduler/create", createScheduler);
 authenticatedRouter.get("/schedulers", getSchedulers);
-authenticatedRouter.get("/schedulers/:schedulerId/slots", getSlots);
 
 const viewsRouter = new express.Router();
 viewsRouter.get("/login", loginView);

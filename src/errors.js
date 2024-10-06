@@ -12,7 +12,15 @@ class AuthenticationError extends UserError {
   }
 }
 
+class NotFoundError extends UserError {
+  constructor(message = "Not Found Error") {
+    super(message);
+    this.code = 404;
+  }
+}
+
 module.exports = {
   AuthenticationError,
   UserError,
+  NotFoundError,
 };
