@@ -44,3 +44,7 @@ Meetings can be created taking into account of the following:
 - Run mongodb on port 27017 `docker container run --name mongo -p 27017:27017 -d mongo`
 - Install dependencies `npm install`
 - Run the app `npm start`
+- Examples of api queries can be found in the  `src/scripts` folder
+
+## Deployment
+`https://pcal.onrender.com/`
