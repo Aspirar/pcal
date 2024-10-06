@@ -38,10 +38,11 @@ function isDayValid(startTime, endTime, scheduler) {
   );
 }
 function fetchConflicts(scheduler, req, startTime, endTime) {
+  const diff = scheduler.startBuffer + scheduler.endBuffer + scheduler.duration;
   return req.model.meetings.fetchByTimeRange({
     userId: scheduler.userId,
-    startTime: toDate(fns.subMilliseconds(startTime, scheduler.startBuffer)),
-    endTime: toDate(fns.addMilliseconds(endTime, scheduler.endBuffer)),
+    startTime: toDate(fns.subMilliseconds(startTime, diff)),
+    endTime: toDate(fns.addMilliseconds(endTime, diff)),
   });
 }
 

@@ -65,10 +65,11 @@ function computeSlots(scheduler, startTime, endTime) {
 
 function fetchMeetings(scheduler, slots, req) {
   if (!slots.length) return [];
+  const diff = scheduler.startBuffer + scheduler.endBuffer + scheduler.duration;
   return req.model.meetings.fetchByTimeRange({
     userId: scheduler.userId,
-    startTime: toDate(slots[0].start),
-    endTime: toDate(slots[slots.length - 1].end),
+    startTime: toDate(fns.subMilliseconds(slots[0].start, diff)),
+    endTime: toDate(fns.addMilliseconds(slots[slots.length - 1].end, diff)),
   });
 }
 
@@ -80,13 +81,21 @@ function isBeforeOrEqual(date, toCompare) {
   return fns.isBefore(date, toCompare) || fns.isEqual(date, toCompare);
 }
 
-function filterConflictingSlots(slots, meetings) {
+function getBufferredTimes(meeting, scheduler) {
+  return {
+    start: fns.subMilliseconds(meeting.startTime, scheduler.startBuffer),
+    end: fns.addMilliseconds(meeting.endTime, scheduler.endBuffer),
+  };
+}
+
+function filterConflictingSlots(slots, meetings, scheduler) {
   let i = 0;
   let j = 0;
   const filtered = [];
   while (i < slots.length && j < meetings.length) {
-    if (isAfterOrEqual(slots[i].start, meetings[j].endTime)) j += 1;
-    else if (isBeforeOrEqual(slots[i].end, meetings[j].startTime)) {
+    const { start, end } = getBufferredTimes(meetings[j], scheduler);
+    if (isAfterOrEqual(slots[i].start, end)) j += 1;
+    else if (isBeforeOrEqual(slots[i].end, start)) {
       filtered.push(slots[i]);
       i += 1;
     } else i += 1;
@@ -101,7 +110,7 @@ function filterSlotsForNotice(slots, scheduler) {
 async function fetchMeetingsAndFilterSlots(scheduler, slots, req) {
   const meetings = await fetchMeetings(scheduler, slots, req);
   return _.flow([
-    (slots) => filterConflictingSlots(slots, meetings),
+    (slots) => filterConflictingSlots(slots, meetings, scheduler),
     (slots) => filterSlotsForNotice(slots, scheduler),
   ])(slots);
 }
