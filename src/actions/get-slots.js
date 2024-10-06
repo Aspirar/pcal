@@ -1,4 +1,5 @@
 const fns = require("date-fns");
+const _ = require("lodash");
 
 const {
   createTzDate,
@@ -79,7 +80,7 @@ function isBeforeOrEqual(date, toCompare) {
   return fns.isBefore(date, toCompare) || fns.isEqual(date, toCompare);
 }
 
-function filterSlots(slots, meetings) {
+function filterConflictingSlots(slots, meetings) {
   let i = 0;
   let j = 0;
   const filtered = [];
@@ -93,9 +94,16 @@ function filterSlots(slots, meetings) {
   return [...filtered, ...slots.slice(i)];
 }
 
+function filterSlotsForNotice(slots, scheduler) {
+  return slots.filter((slot) => slot.start - Date.now() >= scheduler.notice);
+}
+
 async function fetchMeetingsAndFilterSlots(scheduler, slots, req) {
   const meetings = await fetchMeetings(scheduler, slots, req);
-  return filterSlots(slots, meetings);
+  return _.flow([
+    (slots) => filterConflictingSlots(slots, meetings),
+    (slots) => filterSlotsForNotice(slots, scheduler),
+  ])(slots);
 }
 
 async function getFinalSlots(scheduler, startTime, endTime, req) {
