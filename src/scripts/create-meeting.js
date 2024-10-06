@@ -2,9 +2,9 @@ const axios = require("./axios");
 
 async function run() {
   const response = await axios.post(
-    "/schedulers/670165d04492194ad600a304/meeting/create",
+    "/schedulers/67028caaba549163f1cfc4fe/meeting/create",
     {
-      startTime: new Date("2024-10-06T13:00:00.000Z"),
+      startTime: "2024-10-06T18:15:00.000+05:30",
       email: "someone@example.com",
     },
   );

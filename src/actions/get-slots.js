@@ -1,43 +1,18 @@
-const { ObjectId } = require("mongodb");
-const { TZDate } = require("@date-fns/tz");
 const fns = require("date-fns");
 
-const C = require("../constants");
-
-function createTzDate(str, tz) {
-  const dateObj = new Date(str);
-  const year = dateObj.getUTCFullYear();
-  const month = dateObj.getUTCMonth();
-  const date = dateObj.getUTCDate();
-  return new TZDate(year, month, date, tz);
-}
-
-async function fetchScheduler(req) {
-  const schedulerId = ObjectId.createFromHexString(req.params.schedulerId);
-  const scheduler = await req.model.schedulers.fetchById(schedulerId);
-  scheduler.startTime = createTzDate(scheduler.startTime, scheduler.tz);
-  scheduler.endTime = createTzDate(scheduler.endTime, scheduler.tz);
-  return scheduler;
-}
+const {
+  createTzDate,
+  fetchScheduler,
+  isOverlap,
+  getDayStart,
+  getNewConfig,
+  toDate,
+} = require("../lib/core");
 
 function getStartAndEndTime(req) {
   const startTime = createTzDate(req.query.startDate, req.query.tz);
   const endTime = fns.addDays(startTime, 1);
   return { startTime, endTime };
-}
-
-function isOverlap(start1, end1, start2, end2) {
-  return fns.areIntervalsOverlapping(
-    { start: start1, end: end1 },
-    { start: start2, end: end2 },
-  );
-}
-
-function getDayStart(startTime, scheduler) {
-  const diff = Math.floor(
-    (startTime.internal - scheduler.startTime) / C.time.ms.DAY,
-  );
-  return fns.addDays(scheduler.startTime, diff);
 }
 
 function fillConfigSlots(scheduler, config, startTime, endTime) {
@@ -55,10 +30,7 @@ function fillConfigSlots(scheduler, config, startTime, endTime) {
 }
 
 function computeSlotsForConfig(scheduler, day, config, startTime, endTime) {
-  const newConfig = {
-    startTime: fns.addMilliseconds(day, config.slotStartTime),
-    endTime: fns.addMilliseconds(day, config.slotEndTime),
-  };
+  const newConfig = getNewConfig(day, config);
   if (!isOverlap(newConfig.startTime, newConfig.endTime, startTime, endTime))
     return [];
   return fillConfigSlots(scheduler, newConfig, startTime, endTime);
@@ -90,18 +62,12 @@ function computeSlots(scheduler, startTime, endTime) {
   return iterateDays(startTime, endTime, scheduler);
 }
 
-function toDate(tzDate) {
-  return new Date(fns.getTime(tzDate));
-}
-
-function fetchMeetings(slots, req) {
+function fetchMeetings(scheduler, slots, req) {
   if (!slots.length) return [];
-  const startTime = toDate(slots[0].start);
-  const endTime = toDate(slots[slots.length - 1].endTime);
   return req.model.meetings.fetchByTimeRange({
-    userId: req.userId,
-    startTime,
-    endTime,
+    userId: scheduler.userId,
+    startTime: toDate(slots[0].start),
+    endTime: toDate(slots[slots.length - 1].end),
   });
 }
 
@@ -127,14 +93,18 @@ function filterSlots(slots, meetings) {
   return [...filtered, ...slots.slice(i)];
 }
 
-async function fetchMeetingsAndFilterSlots(slots, req) {
-  const meetings = await fetchMeetings(slots, req);
+async function fetchMeetingsAndFilterSlots(scheduler, slots, req) {
+  const meetings = await fetchMeetings(scheduler, slots, req);
   return filterSlots(slots, meetings);
 }
 
 async function getFinalSlots(scheduler, startTime, endTime, req) {
   const slots = computeSlots(scheduler, startTime, endTime);
-  const filteredSlots = await fetchMeetingsAndFilterSlots(slots, req);
+  const filteredSlots = await fetchMeetingsAndFilterSlots(
+    scheduler,
+    slots,
+    req,
+  );
   return filteredSlots;
 }
 
