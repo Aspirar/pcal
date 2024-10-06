@@ -14,6 +14,10 @@ function getStartAndEndTime(req, scheduler) {
   return { startTime, endTime };
 }
 
+function isNoticeSufficient(scheduler, startTime) {
+  return startTime - Date.now() > scheduler.notice;
+}
+
 function isTimeRangeValid(scheduler, startTime, endTime) {
   return isOverlap(scheduler.startTime, scheduler.endTime, startTime, endTime);
 }
@@ -48,6 +52,7 @@ async function isFreeOfConflicts(scheduler, req, startTime, endTime) {
 
 async function isSlotValid(startTime, endTime, scheduler, req) {
   return (
+    isNoticeSufficient(scheduler, startTime) &&
     isTimeRangeValid(scheduler, startTime, endTime) &&
     isDayValid(startTime, endTime, scheduler) &&
     (await isFreeOfConflicts(scheduler, req, startTime, endTime))
