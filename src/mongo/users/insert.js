@@ -4,5 +4,5 @@ module.exports = async ({ db }, payload) => {
     passwordHash: payload.passwordHash,
   };
   const response = await db.insertOne(toInsert);
-  return { _id: response.insertedId };
+  return { _id: response.insertedId, passwordHash: payload.passwordHash };
 };

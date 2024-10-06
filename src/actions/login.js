@@ -1,6 +1,9 @@
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 
+const C = require("../constants");
+const { AuthenticationError } = require("../errors");
+
 async function insertOrFetchUser(req) {
   return req.model.users.insertOrFetch({
     username: req.body.username,
@@ -25,8 +28,18 @@ async function generateAndUpdateToken(model, userId) {
   return `${userId}-${sid}`;
 }
 
+function setTokenInCookie(token, res) {
+  res.cookie(C.cookies.TOKEN, token, {
+    httpOnly: true,
+    maxAge: C.time.ms.DAY * 7,
+  });
+}
+
 module.exports = async (req, res) => {
   const user = await insertOrFetchUser(req);
+  if (!(await bcrypt.compare(req.body.password, user.passwordHash)))
+    throw new AuthenticationError();
   const token = await generateAndUpdateToken(req.model, user._id);
+  setTokenInCookie(token, res);
   res.json({ token });
 };

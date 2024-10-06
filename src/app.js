@@ -1,3 +1,4 @@
+const cookieParser = require("cookie-parser");
 const express = require("express");
 require("express-async-errors");
 
@@ -10,10 +11,13 @@ const routes = require("./routes");
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded());
+app.use(cookieParser());
+
 app.use(reqMiddleware);
-routes.applyRoutes(app);
-app.use(authMiddleware);
-routes.applyAuthenticatedRoutes(app);
+app.use(routes.viewsRouter);
+app.use("/api", routes.router);
+app.use("/api", authMiddleware, routes.authenticatedRouter);
 app.use(errorMiddleware);
 
 app.listen(conf.port, () => {
